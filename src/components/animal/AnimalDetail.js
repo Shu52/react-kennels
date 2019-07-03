@@ -1,37 +1,78 @@
 import React, { Component } from "react"
 import "./Animal.css"
-import dog from "./DogIcon.png"
+import dog from "./DogIcon.svg"
+import Modal from "react-modal"
 
+const customStyles = {
+    content : {
+      top                   : '50%',
+      left                  : '50%',
+      right                 : 'auto',
+      bottom                : 'auto',
+      marginRight           : '-50%',
+      transform             : 'translate(-50%, -50%)'
+    }
+}
+
+Modal.setAppElement('#root')
 
 export default class Animal extends Component {
-    render() {
-        /*
-            Using the route parameter, find the animal that the
-            user clicked on by looking at the `this.props.animals`
-            collection that was passed down from ApplicationViews
-        */
-        const animal = this.props.animals.find(a =>
-            a.id === parseInt(this.props.match.params.animalId))
-             || {id:404, name:"404", breed: "Dog not found"}
+    state = {
+        saveDisabled: false,
+        modalContent: "Are you sure?"
+    }
 
+    openModal = () => {
+        this.setState({modalIsOpen: true});
+    }
+
+    afterOpenModal = () => {
+        this.subtitle.style.color = '#f00';
+    }
+
+    closeModal = () => {
+        this.setState({modalIsOpen: false});
+    }
+
+    render() {
         return (
-            <section className="animal">
-                <div key={animal.id} className="card">
-                    <div className="card-body">
-                        <h4 className="card-title">
-                            <img src={dog} className="icon--dog" />
-                            {animal.name}
-                        </h4>
-                        <h6 className="card-title">{animal.breed}</h6>
-                        <button
-                            onClick={() =>
-                                this.props.dischargeAnimal(animal.id)
-                                    .then(() => this.props.history.push("/animals"))
-                            }
-                            className="card-link">Delete</button>
+            <React.Fragment>
+                <Modal isOpen={this.state.modalIsOpen}
+                    onAfterOpen={this.afterOpenModal}
+                    onRequestClose={this.closeModal}
+                    style={customStyles}
+                    contentLabel="Example Modal" >
+
+                    <h2 ref={subtitle => this.subtitle = subtitle}>{ this.state.modalContent }</h2>
+                    <button onClick={
+                        () => {
+                            this.closeModal()
+                            this.setState(
+                                { saveDisabled: true },
+                                () => this.props.dischargeAnimal(this.props.animal.id)
+                            )
+                        }
+                    }>Yes</button>
+                    <button onClick={ this.closeModal }>No</button>
+                </Modal>
+                <section className="animal">
+                    <div key={this.props.animal.id} className="card">
+                        <div className="card-body">
+                            <h4 className="card-title">
+                                <img src={dog} className="icon--dog" />
+                                {this.props.animal.name}
+                            </h4>
+                            <h6 className="card-title">{this.props.animal.breed}</h6>
+                            <div style={{textAlign:'center'}}>
+                                <button
+                                    onClick={ this.openModal }
+                                    disabled={ this.state.saveDisabled }
+                                    className="btn btn-secondary btn-sm">Discharge</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </React.Fragment>
         )
     }
 }
